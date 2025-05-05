@@ -19,6 +19,7 @@ Unauthorized streams appearing on your channels.
 Potential Terms of Service (ToS) violations with streaming platforms.
 Possible suspensions or bans from platforms due to malicious or inappropriate content streamed through your relay.
 Damage to your reputation as a streamer.
+
 The Solution:
 
 I identified this vulnerability and developed a fix that implements stream key validation. I attempted to contribute this fix to the original repository via a Pull Request, but unfortunately, it was not merged.
