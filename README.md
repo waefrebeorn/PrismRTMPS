@@ -1,4 +1,47 @@
 ## NOW WITH CUSTOM DESTINATIONS & RTMP STATS
+## Subject: Critical Security Vulnerability in PrismRTMPS/Prism - Action Recommended
+
+Dear Prism User,
+
+My name is waaefrebeorn. As a user and developer interested in the Prism RTMP relay project, I'm writing to inform you about a critical security vulnerability present in the original version of the software hosted at:
+
+https://github.com/MorrowShore/Prism
+
+The Vulnerability:
+
+The original version lacks mandatory stream key validation when a stream connects (often referred to as an on_publish check). This means that if your Prism server's IP address and port (usually 1935) are known, anyone can potentially stream to your server using any stream key, and Prism will relay that unauthorized stream to all of your configured destinations (like your Twitch, YouTube, Kick, Facebook accounts, etc.).
+
+The Risk:
+
+This vulnerability could lead to:
+
+Unauthorized streams appearing on your channels.
+Potential Terms of Service (ToS) violations with streaming platforms.
+Possible suspensions or bans from platforms due to malicious or inappropriate content streamed through your relay.
+Damage to your reputation as a streamer.
+The Solution:
+
+I identified this vulnerability and developed a fix that implements stream key validation. I attempted to contribute this fix to the original repository via a Pull Request, but unfortunately, it was not merged.
+
+To ensure users have a secure option, I maintain a fork named PrismRTMPS that includes this critical security fix:
+
+https://github.com/waefrebeorn/PrismRTMPS
+
+My fork includes a validation script (stream_validator.py) that checks the stream key you provide in your streaming software (e.g., OBS) against specific destination keys defined in your server's environment variables (like YOUTUBE_KEY, TWITCH_KEY, etc.). This ensures only streams using one of these recognized keys are relayed, preventing hijacking. (Note: By default, the validator currently checks against the YouTube, Twitch, Kick, and X keys defined in the environment. You can modify the stream_validator.py script if you need to validate against other keys or implement different logic).
+
+Recommendation:
+
+If you are currently using the original Prism from the MorrowShore/Prism repository linked above, I strongly recommend you take action to protect your streams:
+
+Switch to the secured fork: Update your setup to use the code from https://github.com/waefrebeorn/PrismRTMPS which includes the validation mechanism. Instructions are in the README.
+Implement your own validation: If you prefer to stick with the original code structure, ensure you implement a robust on_publish stream key validation mechanism yourself.
+Ignoring this vulnerability leaves your configured streaming destinations exposed to potential hijacking.
+
+If you have questions or need help migrating, feel free to raise an issue on the waefrebeorn/PrismRTMPS GitHub repository or join the Discord server mentioned in the README.
+
+Sincerely,
+
+waaefrebeorn
 
 ## Introduction
 
