@@ -1,5 +1,5 @@
 ## NOW WITH CUSTOM DESTINATIONS & RTMP STATS
-## Subject: Critical Security Vulnerability in PrismRTMPS/Prism - Action Recommended
+## Subject: Critical Security Vulnerability in ORIGINAL Prism - Action Recommended
 
 Dear Prism User,
 
