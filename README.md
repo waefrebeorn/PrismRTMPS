@@ -3,7 +3,7 @@
 
 Dear Prism User,
 
-My name is waaefrebeorn. As a user and developer interested in the Prism RTMP relay project, I'm writing to inform you about a critical security vulnerability present in the original version of the software hosted at:
+My name is waefrebeorn. As a user and developer interested in the Prism RTMP relay project, I'm writing to inform you about a critical security vulnerability present in the original version of the software hosted at:
 
 https://github.com/MorrowShore/Prism
 
@@ -41,7 +41,7 @@ If you have questions or need help migrating, feel free to raise an issue on the
 
 Sincerely,
 
-waaefrebeorn
+waefrebeorn
 
 ## Introduction
 
