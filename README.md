@@ -1,107 +1,85 @@
-## NOW WITH CUSTOM DESTINATIONS & RTMP STATS
-## Subject: Critical Security Vulnerability in ORIGINAL Prism - Action Recommended
+# PrismRTMPS: Secure, Self-hosted Multistreaming Solution (Fork)
 
-Dear Prism User,
+[![Discord](https://img.shields.io/discord/1303046473985818654?label=Discord&logo=discord&style=for-the-badge)](http://wubu.waefrebeorn.com)
 
-My name is waefrebeorn. As a user and developer interested in the Prism RTMP relay project, I'm writing to inform you about a critical security vulnerability present in the original version of the software hosted at:
+**CRITICAL SECURITY ADVISORY & PROJECT CONTEXT (Read First!)**
 
-https://github.com/MorrowShore/Prism
+This project (`waefrebeorn/PrismRTMPS`) is a **fork** of the `MorrowShore/Prism` RTMP relay. It was created primarily to address a **critical security vulnerability** in the original version that allows for **stream hijacking**, and to provide ongoing maintenance and improvements.
 
-The Vulnerability:
+*   **The Vulnerability (Original `MorrowShore/Prism` Pre-May 2025):** The original project historically lacked mandatory stream key validation (`on_publish` check). This meant if a server's IP address and port (usually 1935) were known, **anyone could stream to the server using *any* stream key**, and the original Prism would relay that unauthorized stream to all configured destinations (Twitch, YouTube, etc.).
+*   **Attempted Contribution:** A Pull Request was submitted to `MorrowShore/Prism` with a robust fix for this vulnerability (implementing `on_publish` key validation via `stream_validator.py`). Unfortunately, this PR was closed by the original maintainer with comments focusing on the perceived use of AI in its generation and an unrelated, since-reverted funding file modification, rather than the technical merits of the security fix. Communication on the PR was subsequently limited.
+*   **The "Fix" in Original `MorrowShore/Prism` (Post-May 7, 2025):** Following the closure of the PR, the original maintainer implemented their own changes. These changes include randomizing the RTMP application path (e.g., `rtmp://<ip>/<random_string>`). While this adds a minor layer of *obscurity*, it **does not fundamentally fix the stream hijacking vulnerability**. The random path is often logged and easily discoverable, and if found, hijacking is still possible because the stream key itself is *still not validated*. Their README continues to state "Your Stream Key Does Not Matter," and their commit messages for this "fix" reflect a focus on issues other than robust authentication.
+*   **The Solution in This Fork (`waefrebeorn/PrismRTMPS`):** This fork implements **proper stream key validation**. When a stream connects, its key is checked against your configured destination keys. Only streams with a matching key are relayed. This is the industry-standard approach to securing RTMP relays.
 
-The original version lacks mandatory stream key validation when a stream connects (often referred to as an on_publish check). This means that if your Prism server's IP address and port (usually 1935) are known, anyone can potentially stream to your server using any stream key, and Prism will relay that unauthorized stream to all of your configured destinations (like your Twitch, YouTube, Kick, Facebook accounts, etc.).
+**Recommendation:** Due to the persistent lack of true stream key validation in the `MorrowShore/Prism` repository, users concerned about stream security are strongly advised to use this fork (`waefrebeorn/PrismRTMPS`) or implement their own robust validation.
 
-The Risk:
+---
 
-This vulnerability could lead to:
+## Introduction (waefrebeorn/PrismRTMPS)
 
-Unauthorized streams appearing on your channels.
-Potential Terms of Service (ToS) violations with streaming platforms.
-Possible suspensions or bans from platforms due to malicious or inappropriate content streamed through your relay.
-Damage to your reputation as a streamer.
+Would you like to stream to Twitch, YouTube, Kick, Trovo, Facebook, Instagram, X (Twitter), Cloudflare, and custom RTMP destinations at once, without the upload strain on your computer or recurring fees of commercial services?
 
-The Solution:
+You can host **PrismRTMPS** on a server to act as a **secure and efficient** prism for your streamed content!
 
-I identified this vulnerability and developed a fix that implements stream key validation. I attempted to contribute this fix to the original repository via a Pull Request, but unfortunately, it was not merged.
+You stream **one** high-quality feed to your PrismRTMPS server, and it will:
+1.  **Validate** the incoming stream to ensure it's from you, preventing unauthorized access.
+2.  **Relay** your stream to all the platforms you configure.
 
-To ensure users have a secure option, I maintain a fork named PrismRTMPS that includes this critical security fix:
-
-https://github.com/waefrebeorn/PrismRTMPS
-
-My fork includes a validation script (stream_validator.py) that checks the stream key you provide in your streaming software (e.g., OBS) against specific destination keys defined in your server's environment variables (like YOUTUBE_KEY, TWITCH_KEY, etc.). This ensures only streams using one of these recognized keys are relayed, preventing hijacking. (Note: By default, the validator currently checks against the YouTube, Twitch, Kick, and X keys defined in the environment. You can modify the stream_validator.py script if you need to validate against other keys or implement different logic).
-
-Recommendation:
-
-If you are currently using the original Prism from the MorrowShore/Prism repository linked above, I strongly recommend you take action to protect your streams:
-
-Switch to the secured fork: Update your setup to use the code from https://github.com/waefrebeorn/PrismRTMPS which includes the validation mechanism. Instructions are in the README.
-Implement your own validation: If you prefer to stick with the original code structure, ensure you implement a robust on_publish stream key validation mechanism yourself.
-Ignoring this vulnerability leaves your configured streaming destinations exposed to potential hijacking.
-
-If you have questions or need help migrating, feel free to raise an issue on the waefrebeorn/PrismRTMPS GitHub repository or join the Discord server mentioned in the README.
-
-Sincerely,
-
-waefrebeorn
-
-## Introduction
-
-Would you like to stream to Twitch, Youtube, Kick, Trovo, Facebook, Instagram, X (Twitter), Cloudflare, and custom RTMP destinations at once, but don't have the upload capacity to do it from your own computer?
-
-You can host Prism on a server to act as a prism for your streamed content!
-
-You can then simply stream **one** high-quality feed to your Prism server, and it will securely and efficiently relay your stream to all the platforms you configure.
+This fork also includes performance tuning (optimized `chunk_size`), updated core components for better stability and security, and active maintenance.
 
 ## Prequisites
 
-You'd need a VPS server for this. While powerful hardware isn't strictly necessary for basic relaying, **network performance (bandwidth, low latency, stable routing) between your VPS and your chosen streaming platforms is crucial**, especially for high-bitrate streams (like 1080p 60fps).
+You'd need a VPS server. Key considerations:
+*   **Network Performance:** Good bandwidth, low latency, and stable routing between your VPS and your chosen streaming platforms are crucial, especially for 1080p 60fps.
+*   **Resources:** A 2 vCore, 2GB RAM VPS (like those from Ionos, Linode, Digital Ocean, Vultr, Hetzner Cloud) is often sufficient. This fork has been tested and runs effectively on such configurations. Choose a location strategically.
 
-Cheap VPS options ($5-10 USD range) often work well. Providers like Linode, Digital Ocean, Vultr, Hetzner Cloud, etc., are popular choices. Choose a location geographically close to you or with good known peering to your primary streaming destinations.
+## How To Set up `waefrebeorn/PrismRTMPS`
 
-## How To Set up
-
-*   1- SSH into your VPS server:
+*   1- **SSH into your VPS server:**
     ```bash
-    ssh root@<server_ip_address>
+    ssh root@<your_server_ip_address>
     ```
 
-*   2- Enter the password (it will likely be hidden).
+*   2- **Enter your password.**
 
-*   3- Install Docker: Follow the official Docker installation guide for your VPS's Linux distribution (e.g., Debian, Ubuntu).
+*   3- **Install Docker & Git:**
+    *   Follow the official Docker installation guide for your VPS's Linux distribution.
     *   Example for Debian/Ubuntu:
         ```bash
-        apt update && apt install -y docker.io
-        systemctl start docker
-        systemctl enable docker
+        sudo apt update && sudo apt install -y docker.io git
+        sudo systemctl start docker
+        sudo systemctl enable docker
         ```
 
-*   4- Build the PrismRTMPS image:
+*   4- **Clone and Build the PrismRTMPS image:**
     ```bash
-    docker build -t prism https://github.com/waefrebeorn/PrismRTMPS.git
+    git clone https://github.com/waefrebeorn/PrismRTMPS.git
+    cd PrismRTMPS
+    docker build -t prism-rtmps . 
     ```
-    *(Note: Building directly from GitHub requires Git to be installed on the VPS: `apt install -y git`)*
-    *Alternatively, clone the repo first (`git clone https://github.com/waefrebeorn/PrismRTMPS.git`) and then build from the local directory (`cd PrismRTMPS && docker build -t prism .`)*
+    *(Using `prism-rtmps` as the image name to differentiate)*
 
-*   5- Verify the image has been built:
+*   5- **Verify the image has been built:**
     ```bash
     docker images
     ```
-    *(You should see `prism` listed)*
+    *(You should see `prism-rtmps` listed)*
 
-*   6- **Run the Prism Container:**
+*   6- **Run the PrismRTMPS Container:**
     *   Provide the specific stream keys for **each destination platform** you want to stream *to*.
-    *   **IMPORTANT:** The key you use in OBS (Step 7) **must** be one of the keys you provide here using the `-e PLATFORM_KEY="..."` arguments. Any non-empty key provided here will grant access to the relay if used in OBS.
-    *   Remove the `-e PLATFORM_KEY="..."` lines for platforms you *don't* want to use.
+    *   **IMPORTANT (Stream Key for OBS):** The key you use in OBS (Step 7) **must be ONE of the actual stream keys you provide below** (e.g., your `YOUTUBE_KEY`, `TWITCH_KEY`, etc.). This is how PrismRTMPS validates your stream.
+    *   Remove lines for platforms you *don't* intend to use.
 
     **Example `docker run` command:**
     ```bash
-    docker run -d --name prism \
+    docker run -d --name prism-rtmps \
       -p 1935:1935 \
       -p 8081:8081 `# Expose port for RTMP stats page` \
       --restart unless-stopped `# Optional: auto-restart container` \
-      # --- Provide keys for destinations you want to use ---
+      # --- Provide stream keys for YOUR desired destinations ---
+      # --- The key you use in OBS MUST match one of these ---
       -e YOUTUBE_KEY="your-youtube-stream-key" `# You could use this key in OBS` \
-      -e TWITCH_URL="rtmp://live-iad.twitch.tv/app/" `# Important: Find your nearest Twitch ingest server!` \
+      -e TWITCH_URL="rtmp://live-iad.twitch.tv/app/" `# Find your nearest Twitch ingest server!` \
       -e TWITCH_KEY="your_twitch_stream_key" `# Or you could use this key in OBS` \
       -e KICK_KEY="sk_us-west-1_xxxxxxxxxxxxxx" `# Or this one...` \
       -e FACEBOOK_KEY="your-facebook-stream-key" \
@@ -111,74 +89,52 @@ Cheap VPS options ($5-10 USD range) often work well. Providers like Linode, Digi
       # -e TROVO_KEY="your-trovo-key" `   # Uncomment if using Trovo ` \
       # -e RTMP1_URL="rtmp://custom.server.com/live" ` # Uncomment for Custom Dest 1 ` \
       # -e RTMP1_KEY="custom-key-1" `                  # Uncomment for Custom Dest 1 ` \
-      prism
+      prism-rtmps 
     ```
-    *   Replace placeholder values (`your-key-here`, URLs) with your actual keys and preferred ingest URLs.
-    *   The `-d` runs the container in detached mode (in the background).
-    *   `--restart unless-stopped` makes Docker automatically restart the container if it crashes or the VPS reboots.
+    *   The `-d` runs the container detached. `--restart unless-stopped` is recommended.
+    *   **Note on Validator:** `stream_validator.py` in this fork checks the incoming key against *all* non-empty destination keys you provide.
 
 *   7- **Configure OBS (or other streaming software):**
     *   Service: `Custom...`
     *   Server: `rtmp://<your_vps_ip_address>:1935/live`
-    *   Stream Key: **Use ONE of the actual stream keys you configured in the `docker run` command** (e.g., paste your `YOUTUBE_KEY` value here, or your `TWITCH_KEY` value, etc.).
+        *(The application path is `/live` by default in this fork for simplicity and predictability)*
+    *   Stream Key: **Use ONE of the actual stream keys you configured in the `docker run` command.**
 
-*   8- Begin streaming from OBS! Your stream goes to Prism, which then relays it to YouTube, Twitch, Kick, etc.
+*   8- **Begin streaming from OBS!**
 
-*   9- **(Optional) View Stream Statistics:** Open `http://<your_vps_ip_address>:8081/stat` in your web browser to see details about active connections, bitrates, etc.
+*   9- **(Optional) View Stream Statistics:** Open `http://<your_vps_ip_address>:8081/stat` in your web browser.
 
-We advise testing with just one or two destinations first to ensure the setup is correct before enabling all platforms.
+We advise testing with one or two destinations first.
 
-## How To Manage
+## How To Manage PrismRTMPS
 
-*   **STOP** the container:
-    ```bash
-    docker stop prism
-    ```
-
-*   **START** the container (if stopped):
-    ```bash
-    docker start prism
-    ```
-
-*   **VIEW LOGS** (essential for troubleshooting):
-    ```bash
-    docker logs prism
-    ```
-    *   To follow logs in real-time:
-        ```bash
-        docker logs -f prism
-        ```
-
-*   **EDIT Destinations / Keys:**
-    1.  Stop the current container: `docker stop prism`
-    2.  Remove the current container: `docker rm prism`
-    3.  Run a new container using the `docker run` command (from Step 6) with your updated `-e` variables.
-
-*   **UNINSTALL** the entire project:
-    1.  Stop the container: `docker stop prism`
-    2.  Remove the container: `docker rm prism`
-    3.  List images: `docker images`
-    4.  Find the IMAGE ID for `prism`.
-    5.  Remove the image: `docker rmi <IMAGE_ID>`
-    6.  (Optional) Remove Docker itself if no longer needed.
+*   **STOP** the container: `docker stop prism-rtmps`
+*   **START** the container: `docker start prism-rtmps`
+*   **VIEW LOGS:** `docker logs prism-rtmps` (or `docker logs -f prism-rtmps` for live logs)
+*   **EDIT Destinations / Keys:** Stop, remove (`docker rm prism-rtmps`), and re-run the `docker run` command.
+*   **UNINSTALL:** Stop, remove container, then `docker rmi prism-rtmps`.
 
 ## Troubleshooting Common Issues
 
-*   **Lag / Falling Behind Stream:** This is almost always caused by a **slow connection between your VPS and *one* of the destination platforms**.
-    *   **Diagnosis:** Stop the container, remove it, and run tests pushing to *only one destination at a time* (modify the `docker run` command). Identify which specific platform causes the lag when streamed to alone.
-    *   Check network path quality from VPS to the slow destination using `mtr <destination_hostname>` (install `mtr` on VPS: `apt update && apt install mtr -y`). Look for packet loss or high latency hops.
-    *   **Solutions:** Try a different ingest server for that platform, change VPS provider/location for better routing, or reduce your stream bitrate in OBS.
+*   **Lag / Falling Behind Stream:** Often a network bottleneck. This fork uses `chunk_size: 8192` for improved performance.
+    *   **Diagnosis:** Test one destination at a time. Use `mtr <destination_hostname>` from VPS.
+    *   **Solutions:** Different ingest servers, different VPS location, or lower stream bitrate.
 *   **Stream Rejects / "Invalid Key":**
-    *   Ensure the key you put in OBS *exactly* matches **one** of the non-empty keys (`YOUTUBE_KEY`, `TWITCH_KEY`, etc.) you set in the `docker run` command.
-    *   Make sure you actually provided at least one `-e PLATFORM_KEY=...` in your `docker run` command.
-    *   Check the validator logs: `docker exec prism tail /tmp/validator.log` or `docker logs prism` for validator startup messages and specific rejection reasons.
-*   **One Destination Not Working:**
-    *   Double-check the URL and Key for that specific platform in your `docker run` command.
-    *   Check Nginx and Stunnel logs: `docker logs prism`. Look for connection errors related to that destination's port or hostname.
-    *   Ensure the destination platform's stream is correctly set up (e.g., "Go Live" clicked on YouTube/Facebook).
+    *   OBS key *must exactly match* one key from `docker run`.
+    *   Ensure at least one destination key is active in `docker run`.
+    *   Check validator logs: `docker exec prism-rtmps tail /tmp/validator.log` or `docker logs prism-rtmps`.
+*   **One Destination Not Working:** Check URL/Key in `docker run`. Check Nginx/Stunnel logs. Ensure stream is active on the platform.
 
-## Support
+## Support & Contributing to This Fork
 
-Need help with anything, or have thought of an upgrade?
+Need help or have suggestions for **this fork**? Your contributions and feedback are welcome!
 
-Find us at our Discord server: https://discord.gg/2sbnwze753
+*   Raise an Issue: [https://github.com/waefrebeorn/PrismRTMPS/issues](https://github.com/waefrebeorn/PrismRTMPS/issues)
+*   Join our Discord: [http://wubu.waefrebeorn.com](http://wubu.waefrebeorn.com) (Shield above also links here)
+
+---
+**Regarding the Original `MorrowShore/Prism` Repository:**
+
+As noted in the advisory at the top, attempts to contribute essential security fixes to the original `MorrowShore/Prism` repository were met with dismissal and a subsequent "fix" that does not adequately address the core stream hijacking vulnerability. The maintainer's focus appeared to be on the perceived method of contribution rather than the critical security implications for users.
+
+Given this, `waefrebeorn/PrismRTMPS` will serve as an actively maintained, secure, and performance-tuned alternative for the community. We encourage users to prioritize their security.
