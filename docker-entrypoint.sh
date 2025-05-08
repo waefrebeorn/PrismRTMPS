@@ -5,7 +5,8 @@ NGINX_TEMPLATE=/etc/nginx/nginx.conf.template
 NGINX_CONF=/etc/nginx/nginx.conf
 VALIDATOR_LOG=/tmp/validator.log
 ENV_OK=0
-MAX_WAIT_VALIDATOR=15 # Maximum seconds to wait for validator
+MAX_WAIT_VALIDATOR_SECONDS=15 # Maximum seconds to wait for validator
+VALIDATOR_CHECK_INTERVAL_SECONDS=0.2 # Check every 200ms
 
 # !!! Removed MASTER_STREAM_KEY check !!!
 # The container will now start without it, relying on destination keys for validation.
@@ -18,22 +19,35 @@ echo "Validator PID: $VALIDATOR_PID"
 
 # --- Robust Validator Check ---
 echo "Waiting for validator to be ready..."
-WAIT_COUNT=0
 VALIDATOR_READY=0
-while [ $WAIT_COUNT -lt $MAX_WAIT_VALIDATOR ]; do
+# Calculate maximum attempts based on total wait time and interval
+# Use awk for floating point division and ceiling to integer
+MAX_ATTEMPTS=$(awk -v max_wait="$MAX_WAIT_VALIDATOR_SECONDS" -v interval="$VALIDATOR_CHECK_INTERVAL_SECONDS" 'BEGIN {printf "%.0f", max_wait / interval}')
+CURRENT_ATTEMPT=0
+
+while [ $CURRENT_ATTEMPT -lt $MAX_ATTEMPTS ]; do
     # Check if process exists AND responds to health check
-    if kill -0 $VALIDATOR_PID 2>/dev/null && curl --fail --silent http://127.0.0.1:8080/health > /dev/null; then
+    # Added --connect-timeout and reduced --max-time for curl
+    if kill -0 $VALIDATOR_PID 2>/dev/null && curl --fail --silent --connect-timeout 0.1 --max-time 0.4 http://127.0.0.1:8080/health > /dev/null; then
         echo "Validator is running and responding."
         VALIDATOR_READY=1
         break
     fi
-    echo "Validator not ready yet, waiting... (${WAIT_COUNT}s / ${MAX_WAIT_VALIDATOR}s)"
-    sleep 1
-    WAIT_COUNT=$((WAIT_COUNT + 1))
+
+    # Log approximately every second to avoid excessive verbosity
+    # (e.g., if interval is 0.2s, log every 5 attempts)
+    LOG_THROTTLE_ATTEMPTS=$(awk -v interval="$VALIDATOR_CHECK_INTERVAL_SECONDS" 'BEGIN {printf "%.0f", 1 / interval}')
+    if [ $((CURRENT_ATTEMPT % LOG_THROTTLE_ATTEMPTS)) -eq 0 ] || [ $CURRENT_ATTEMPT -eq 0 ]; then
+        ELAPSED_SECONDS_APPROX=$(awk -v current_attempt="$CURRENT_ATTEMPT" -v interval="$VALIDATOR_CHECK_INTERVAL_SECONDS" 'BEGIN {printf "%.1f", current_attempt * interval}')
+        echo "Validator not ready yet, waiting... (${ELAPSED_SECONDS_APPROX}s / ${MAX_WAIT_VALIDATOR_SECONDS}s)"
+    fi
+    sleep $VALIDATOR_CHECK_INTERVAL_SECONDS
+    CURRENT_ATTEMPT=$((CURRENT_ATTEMPT + 1))
 done
 
 if [ $VALIDATOR_READY -eq 0 ]; then
-    echo "ERROR: Stream key validator failed to start or respond within ${MAX_WAIT_VALIDATOR} seconds."
+    ELAPSED_SECONDS_FINAL=$(awk -v current_attempt="$CURRENT_ATTEMPT" -v interval="$VALIDATOR_CHECK_INTERVAL_SECONDS" 'BEGIN {printf "%.1f", current_attempt * interval}')
+    echo "ERROR: Stream key validator failed to start or respond within ${ELAPSED_SECONDS_FINAL}s (max ${MAX_WAIT_VALIDATOR_SECONDS}s)."
     echo "Check validator logs:"
     cat "$VALIDATOR_LOG"
     exit 1
@@ -98,6 +112,8 @@ if [ $ENV_OK -eq 1 ]; then
 else
     echo "Warning: No destination stream keys provided. Nginx will start, but no streams will be pushed, and no incoming streams will be accepted."
     # Still generate config from template, it will just have no push directives
+    # Define the list of variables envsubst should consider even if no ENV_OK
+    EXPORT_VARS=$(printf '${%s} ' $(env | cut -d= -f1))
     envsubst "$EXPORT_VARS" < $TMP_TEMPLATE > $NGINX_CONF
     rm $TMP_TEMPLATE
 fi
