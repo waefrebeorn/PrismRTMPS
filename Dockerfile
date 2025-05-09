@@ -1,8 +1,8 @@
-FROM buildpack-deps:bullseye
+FROM buildpack-deps:bookworm
 
 # Versions of Nginx and nginx-rtmp-module to use
-ENV NGINX_VERSION nginx-1.18.0
-ENV NGINX_RTMP_MODULE_VERSION 1.2.1
+ENV NGINX_VERSION nginx-1.26.1
+ENV NGINX_RTMP_MODULE_VERSION 1.2.2
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends python3 python3-pip && \
