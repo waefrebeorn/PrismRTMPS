@@ -102,7 +102,6 @@ You'd need a VPS server. Key considerations:
 
 *   8- **Begin streaming from OBS!**
 
-*   9- **(Optional) View Stream Statistics:** Open `http://<your_vps_ip_address>:8081/stat` in your web browser.
 
 We advise testing with one or two destinations first.
 
