@@ -12,8 +12,18 @@ VALIDATOR_CHECK_INTERVAL_SECONDS=0.2 # Check every 200ms
 # The container will now start without it, relying on destination keys for validation.
 
 echo "Starting stream key validation server..."
-# Start in background, redirect stdout/stderr to a log file
-python3 /stream_validator.py > "$VALIDATOR_LOG" 2>&1 &
+# Start Gunicorn in the background to run the Flask app
+# -w 1: Use a single worker process (sufficient for this task)
+# -b 127.0.0.1:8080: Bind to the same internal host and port
+# --log-level info: Set the log level
+# stream_validator:app: Point to the 'app' object in your python file
+gunicorn \
+    --workers 1 \
+    --bind 127.0.0.1:8080 \
+    --log-level info \
+    --access-logfile "$VALIDATOR_LOG" \
+    --error-logfile "$VALIDATOR_LOG" \
+    stream_validator:app &
 VALIDATOR_PID=$!
 echo "Validator PID: $VALIDATOR_PID"
 
