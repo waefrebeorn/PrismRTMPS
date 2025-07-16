@@ -6,7 +6,7 @@ ENV NGINX_RTMP_MODULE_VERSION 1.2.2
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends python3 python3-pip && \
-    pip3 install flask && \
+    pip3 install flask gunicorn && \
     apt-get install -y --no-install-recommends ca-certificates openssl libssl-dev stunnel4 gettext && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
